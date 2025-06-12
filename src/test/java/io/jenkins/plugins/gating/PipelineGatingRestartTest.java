@@ -32,16 +32,14 @@ class PipelineGatingRestartTest {
 
     @Test
     void restartBlocked(JenkinsRule j) throws Throwable {
-        PipelineGatingTest.Runner[] r = new PipelineGatingTest.Runner[1];
-
         WorkflowJob w = j.jenkins.createProject(WorkflowJob.class, "w");
         w.setDefinition(new CpsFlowDefinition(
                 "echo 'Bstart'; requireResources(resources: ['foo/bar/baz', 'foo/red/sox']) { echo 'Binside' }; echo 'Bafter'", true
         ));
 
-        r[0] = new PipelineGatingTest.Runner(w, j);
-        r[0].await("Bstart", "Binside");
-        r[0].await("Some resources are not available: foo/bar/baz is UNKNOWN, foo/red/sox is UNKNOWN");
+        PipelineGatingTest.Runner r = new PipelineGatingTest.Runner(w, j);
+        r.await("Bstart", "Binside");
+        r.await("Some resources are not available: foo/bar/baz is UNKNOWN, foo/red/sox is UNKNOWN");
 
         j.restart();
 
@@ -50,8 +48,8 @@ class PipelineGatingRestartTest {
                 "foo/red/sox", ResourceStatus.Category.DOWN
         ));
 
-        r[0].await("Bstart", "Binside");
-        r[0].await("Some resources are not available: foo/red/sox is DOWN");
+        r.await("Bstart", "Binside");
+        r.await("Some resources are not available: foo/red/sox is DOWN");
 
         j.restart();
 
@@ -60,7 +58,7 @@ class PipelineGatingRestartTest {
                 "foo/red/sox", ResourceStatus.Category.UP
         ));
 
-        r[0].await("Binside");
-        r[0].await("Bafter");
+        r.await("Binside");
+        r.await("Bafter");
     }
 }
