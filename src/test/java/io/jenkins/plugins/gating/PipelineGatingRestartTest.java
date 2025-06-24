@@ -22,10 +22,15 @@
 package io.jenkins.plugins.gating;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
 
 @WithJenkins
 class PipelineGatingRestartTest {
@@ -43,6 +48,9 @@ class PipelineGatingRestartTest {
 
         j.restart();
 
+        await().atMost(5, TimeUnit.SECONDS)
+                .until(() -> FlowExecutionList.get().isResumptionComplete());
+
         Utils.setStatus(Utils.snapshot(
                 "foo/bar/baz", ResourceStatus.Category.UP,
                 "foo/red/sox", ResourceStatus.Category.DOWN
@@ -52,6 +60,9 @@ class PipelineGatingRestartTest {
         r.await("Some resources are not available: foo/red/sox is DOWN");
 
         j.restart();
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .until(() -> FlowExecutionList.get().isResumptionComplete());
 
         Utils.setStatus(Utils.snapshot(
                 "foo/bar/baz", ResourceStatus.Category.UP,
